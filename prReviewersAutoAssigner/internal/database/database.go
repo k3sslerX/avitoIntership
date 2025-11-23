@@ -21,15 +21,13 @@ func NewPostgresDB(cfg *config.Config) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Test connection
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	// Set connection pool settings
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(25)
-	db.SetConnMaxLifetime(5 * 60) // 5 minutes
+	db.SetConnMaxLifetime(5 * 60)
 
 	log.Printf("Connected to database at %s:%s", cfg.DBHost, cfg.DBPort)
 	return db, nil
