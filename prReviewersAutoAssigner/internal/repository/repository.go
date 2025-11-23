@@ -330,28 +330,48 @@ func (r *PostgresRepository) GetReviewStats(ctx context.Context) ([]consts.Revie
 }
 
 func (r *PostgresRepository) GetPRStats(ctx context.Context) (*consts.PRStats, error) {
-	var stats consts.PRStats
+	stats := &consts.PRStats{}
 
-	query := `
-		SELECT 
-			COUNT(*) as total_prs,
-			COUNT(CASE WHEN status = 'OPEN' THEN 1 END) as open_prs,
-			COUNT(CASE WHEN status = 'MERGED' THEN 1 END) as merged_prs,
-			COUNT(CASE WHEN NOT EXISTS (
-				SELECT 1 FROM pr_reviewers WHERE pr_id = pull_requests.pull_request_id
-			) THEN 1 END) as prs_without_reviewers,
-			COALESCE(AVG(reviewer_count), 0) as avg_reviewers
-		FROM pull_requests
-		LEFT JOIN (
-			SELECT pr_id, COUNT(*) as reviewer_count
-			FROM pr_reviewers
-			GROUP BY pr_id
-		) pr_counts ON pull_requests.pull_request_id = pr_counts.pr_id`
-
-	err := r.Db.GetContext(ctx, &stats, query)
+	// Общее количество PR
+	err := r.Db.GetContext(ctx, &stats.TotalPRs, "SELECT COUNT(*) FROM pull_requests")
 	if err != nil {
 		return nil, err
 	}
 
-	return &stats, nil
+	// Открытые PR
+	err = r.Db.GetContext(ctx, &stats.OpenPRs, "SELECT COUNT(*) FROM pull_requests WHERE status = 'OPEN'")
+	if err != nil {
+		return nil, err
+	}
+
+	// Мерженые PR
+	err = r.Db.GetContext(ctx, &stats.MergedPRs, "SELECT COUNT(*) FROM pull_requests WHERE status = 'MERGED'")
+	if err != nil {
+		return nil, err
+	}
+
+	// PR без ревьюверов
+	err = r.Db.GetContext(ctx, &stats.PRsWithoutReviewers, `
+		SELECT COUNT(*) 
+		FROM pull_requests 
+		WHERE NOT EXISTS (
+			SELECT 1 FROM pr_reviewers WHERE pr_id = pull_requests.pull_request_id
+		)`)
+	if err != nil {
+		return nil, err
+	}
+
+	// Среднее количество ревьюверов
+	err = r.Db.GetContext(ctx, &stats.AvgReviewers, `
+		SELECT COALESCE(AVG(reviewer_count), 0)
+		FROM (
+			SELECT pr_id, COUNT(*) as reviewer_count
+			FROM pr_reviewers
+			GROUP BY pr_id
+		) pr_counts`)
+	if err != nil {
+		return nil, err
+	}
+
+	return stats, nil
 }

@@ -62,11 +62,11 @@ type ReviewStats struct {
 }
 
 type PRStats struct {
-	TotalPRs            int     `json:"total_prs"`
-	OpenPRs             int     `json:"open_prs"`
-	MergedPRs           int     `json:"merged_prs"`
-	PRsWithoutReviewers int     `json:"prs_without_reviewers"`
-	AvgReviewersPerPR   float64 `json:"avg_reviewers_per_pr"`
+	TotalPRs            int     `json:"total_prs" db:"total_prs"`
+	OpenPRs             int     `json:"open_prs" db:"open_prs"`
+	MergedPRs           int     `json:"merged_prs" db:"merged_prs"`
+	PRsWithoutReviewers int     `json:"prs_without_reviewers" db:"prs_without_reviewers"`
+	AvgReviewers        float64 `json:"avg_reviewers_per_pr" db:"avg_reviewers"`
 }
 
 type StatsResponse struct {
