@@ -60,8 +60,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: prReviewersAutoAssigner/Dockerfile
+          context: ./prReviewersAutoAssigner
+          file: Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.RL_IMAGE_NAME }}:latest
